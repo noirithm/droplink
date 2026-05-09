@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+  <head>
+    <title>DropLink</title>
+  </head>
+  <body>
+    <h1>DropLink</h1>
+
+    <button onclick="createRoom()">Create Room</button>
+    <p>Code: <strong id="room-code">—</strong></p>
+    <p>Status: <span id="sender-status">idle</span></p>
+
+    <hr />
+
+    <input id="code-input" placeholder="Enter code" />
+    <button onclick="joinRoom()">Join</button>
+    <p>Status: <span id="receiver-status">idle</span></p>
+
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+      const socket = io("http://localhost:3000");
+
+      function createRoom() {
+        socket.emit("create-room");
+      }
+
+      function joinRoom() {
+        const code = document.getElementById("code-input").value;
+        socket.emit("join-room", code);
+      }
+
+      socket.on("room-created", (code) => {
+        document.getElementById("room-code").textContent = code;
+        document.getElementById("sender-status").textContent =
+          "waiting for peer...";
+      });
+
+      socket.on("room-joined", (code) => {
+        document.getElementById("receiver-status").textContent =
+          `joined room ${code}`;
+      });
+
+      socket.on("peer-joined", () => {
+        document.getElementById("sender-status").textContent =
+          "peer connected!";
+      });
+
+      socket.on("error", (msg) => {
+        alert("Error: " + msg);
+      });
+    </script>
+  </body>
+</html>
