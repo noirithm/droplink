@@ -1,3 +1,4 @@
+<!doctype html>
 <html>
   <head>
     <title>DropLink</title>
@@ -15,9 +16,56 @@
     <button onclick="joinRoom()">Join</button>
     <p>Status: <span id="receiver-status">idle</span></p>
 
+    <div id="log" style="margin-top: 20px; font-family: monospace"></div>
+
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script>
       const socket = io("http://localhost:3000");
+
+      let peer = null;
+      let dataChannel = null;
+      let currentCode = null;
+
+      const STUN = {
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      };
+
+      function log(msg) {
+        document.getElementById("log").innerHTML += `<p>> ${msg}</p>`;
+      }
+
+      function createPeer(isSender) {
+        peer = new RTCPeerConnection(STUN);
+
+        peer.onicecandidate = (e) => {
+          if (e.candidate) {
+            socket.emit("ice-candidate", {
+              code: currentCode,
+              candidate: e.candidate,
+            });
+          }
+        };
+
+        peer.onconnectionstatechange = () => {
+          log(`connection state: ${peer.connectionState}`);
+        };
+
+        if (isSender) {
+          dataChannel = peer.createDataChannel("droplink");
+          setupDataChannel(dataChannel);
+        } else {
+          peer.ondatachannel = (e) => {
+            dataChannel = e.channel;
+            setupDataChannel(dataChannel);
+          };
+        }
+      }
+
+      function setupDataChannel(channel) {
+        channel.onopen = () => log("data channel open — peers connected!");
+        channel.onclose = () => log("data channel closed");
+        channel.onmessage = (e) => log(`received message: ${e.data}`);
+      }
 
       function createRoom() {
         socket.emit("create-room");
@@ -25,10 +73,12 @@
 
       function joinRoom() {
         const code = document.getElementById("code-input").value;
+        currentCode = code;
         socket.emit("join-room", code);
       }
 
       socket.on("room-created", (code) => {
+        currentCode = code;
         document.getElementById("room-code").textContent = code;
         document.getElementById("sender-status").textContent =
           "waiting for peer...";
@@ -37,11 +87,41 @@
       socket.on("room-joined", (code) => {
         document.getElementById("receiver-status").textContent =
           `joined room ${code}`;
+
+        createPeer(false);
+        log("waiting for offer...");
       });
 
-      socket.on("peer-joined", () => {
+      socket.on("peer-joined", async () => {
         document.getElementById("sender-status").textContent =
-          "peer connected!";
+          "peer found, connecting...";
+        createPeer(true);
+
+        const offer = await peer.createOffer();
+        await peer.setLocalDescription(offer);
+        socket.emit("offer", { code: currentCode, offer });
+        log("offer sent");
+      });
+
+      socket.on("offer", async (offer) => {
+        await peer.setRemoteDescription(offer);
+        const answer = await peer.createAnswer();
+        await peer.setLocalDescription(answer);
+        socket.emit("answer", { code: currentCode, answer });
+        log("answer sent");
+      });
+
+      socket.on("answer", async (answer) => {
+        await peer.setRemoteDescription(answer);
+        log("answer received");
+      });
+
+      socket.on("ice-candidate", async (candidate) => {
+        await peer.addIceCandidate(candidate);
+      });
+
+      socket.on("peer-disconnected", () => {
+        log("peer disconnected");
       });
 
       socket.on("error", (msg) => {
