@@ -1,41 +1,300 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>DropLink</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #0f0f0f;
+        color: #e0e0e0;
+        font-family: "Segoe UI", sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -1px;
+        margin-bottom: 6px;
+      }
+
+      .subtitle {
+        color: #666;
+        font-size: 0.95rem;
+        margin-bottom: 50px;
+      }
+
+      .cards {
+        display: flex;
+        gap: 24px;
+        width: 100%;
+        max-width: 800px;
+        flex-wrap: wrap;
+      }
+
+      .card {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 16px;
+        padding: 32px;
+        flex: 1;
+        min-width: 300px;
+      }
+
+      .card h2 {
+        font-size: 1rem;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 24px;
+      }
+
+      .drop-zone {
+        border: 2px dashed #333;
+        border-radius: 12px;
+        padding: 40px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 20px;
+      }
+
+      .drop-zone:hover,
+      .drop-zone.drag-over {
+        border-color: #4f9eff;
+        background: rgba(79, 158, 255, 0.05);
+      }
+
+      .drop-zone p {
+        color: #555;
+        font-size: 0.9rem;
+      }
+      .drop-zone .icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+      }
+
+      .code-display {
+        background: #111;
+        border: 1px solid #2a2a2a;
+        border-radius: 10px;
+        padding: 16px;
+        text-align: center;
+        margin-bottom: 16px;
+      }
+
+      .code-display .code {
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: 8px;
+        color: #4f9eff;
+        font-family: monospace;
+      }
+
+      .code-display .code-label {
+        font-size: 0.75rem;
+        color: #555;
+        margin-bottom: 8px;
+      }
+
+      .status {
+        font-size: 0.85rem;
+        color: #666;
+        text-align: center;
+        margin-bottom: 16px;
+      }
+
+      .status.active {
+        color: #4f9eff;
+      }
+      .status.success {
+        color: #4ade80;
+      }
+      .status.error {
+        color: #f87171;
+      }
+
+      .progress-bar {
+        background: #222;
+        border-radius: 999px;
+        height: 6px;
+        overflow: hidden;
+        margin-bottom: 8px;
+        display: none;
+      }
+
+      .progress-bar.visible {
+        display: block;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: #4f9eff;
+        border-radius: 999px;
+        transition: width 0.2s;
+        width: 0%;
+      }
+
+      .progress-text {
+        font-size: 0.8rem;
+        color: #555;
+        text-align: center;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        background: #111;
+        border: 1px solid #2a2a2a;
+        border-radius: 10px;
+        padding: 14px 16px;
+        color: #fff;
+        font-size: 1.1rem;
+        letter-spacing: 4px;
+        text-align: center;
+        outline: none;
+        margin-bottom: 12px;
+        font-family: monospace;
+      }
+
+      input[type="text"]:focus {
+        border-color: #4f9eff;
+      }
+
+      button {
+        width: 100%;
+        padding: 14px;
+        border-radius: 10px;
+        border: none;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: #4f9eff;
+        color: #fff;
+      }
+
+      .btn-primary:hover {
+        background: #3b8af0;
+      }
+      .btn-primary:disabled {
+        background: #2a2a2a;
+        color: #555;
+        cursor: not-allowed;
+      }
+
+      .btn-secondary {
+        background: #222;
+        color: #aaa;
+        border: 1px solid #2a2a2a;
+        margin-bottom: 12px;
+      }
+
+      .btn-secondary:hover {
+        background: #2a2a2a;
+      }
+
+      .divider {
+        width: 1px;
+        background: #2a2a2a;
+        align-self: stretch;
+      }
+
+      @media (max-width: 680px) {
+        .divider {
+          display: none;
+        }
+        .cards {
+          flex-direction: column;
+        }
+      }
+    </style>
   </head>
   <body>
     <h1>DropLink</h1>
+    <p class="subtitle">
+      Browser to browser file transfer. No server. No cloud.
+    </p>
 
-    <div id="sender-section">
-      <button onclick="createRoom()">Create Room</button>
-      <p>Code: <strong id="room-code">—</strong></p>
-      <p>Status: <span id="sender-status">idle</span></p>
-      <input
-        type="file"
-        id="file-input"
-        style="display: none"
-        onchange="sendFile()"
-      />
-      <button
-        id="send-btn"
-        onclick="document.getElementById('file-input').click()"
-        disabled
-      >
-        Send File
-      </button>
-      <div id="send-progress"></div>
+    <div class="cards">
+      <!-- SENDER -->
+      <div class="card">
+        <h2>Send a File</h2>
+
+        <div
+          class="drop-zone"
+          id="drop-zone"
+          onclick="document.getElementById('file-input').click()"
+        >
+          <div class="icon">📁</div>
+          <p id="drop-text">Click or drag a file here</p>
+        </div>
+        <input
+          type="file"
+          id="file-input"
+          style="display: none"
+          onchange="onFileSelected()"
+        />
+
+        <div class="code-display" id="code-display" style="display: none">
+          <div class="code-label">Share this code</div>
+          <div class="code" id="room-code">—</div>
+        </div>
+
+        <p class="status" id="sender-status">Click below to start</p>
+
+        <div class="progress-bar" id="send-progress-bar">
+          <div class="progress-fill" id="send-progress-fill"></div>
+        </div>
+        <p class="progress-text" id="send-progress-text"></p>
+
+        <button class="btn-primary" onclick="createRoom()" id="create-btn">
+          Create Room
+        </button>
+        <br /><br />
+        <button
+          class="btn-primary"
+          id="send-btn"
+          onclick="sendFile()"
+          disabled
+          style="display: none"
+        >
+          Send File
+        </button>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- RECEIVER -->
+      <div class="card">
+        <h2>Receive a File</h2>
+
+        <input type="text" id="code-input" placeholder="000000" maxlength="6" />
+
+        <p class="status" id="receiver-status">Enter the code above</p>
+
+        <div class="progress-bar" id="recv-progress-bar">
+          <div class="progress-fill" id="recv-progress-fill"></div>
+        </div>
+        <p class="progress-text" id="recv-progress-text"></p>
+
+        <button class="btn-primary" onclick="joinRoom()">Join Room</button>
+      </div>
     </div>
-
-    <hr />
-
-    <div id="receiver-section">
-      <input id="code-input" placeholder="Enter code" />
-      <button onclick="joinRoom()">Join</button>
-      <p>Status: <span id="receiver-status">idle</span></p>
-      <div id="receive-progress"></div>
-    </div>
-
-    <div id="log" style="margin-top: 20px; font-family: monospace"></div>
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script>
@@ -44,40 +303,65 @@
       let peer = null;
       let dataChannel = null;
       let currentCode = null;
+      let selectedFile = null;
 
-      // File receiving state
       let receivingMeta = null;
       let receivedChunks = [];
       let receivedSize = 0;
 
-      const CHUNK_SIZE = 16384; // 16KB
-      const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB limit
+      const CHUNK_SIZE = 16384;
+      const MAX_FILE_SIZE = 500 * 1024 * 1024;
 
-      const STUN = {
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-      };
+      const STUN = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
-      function log(msg) {
-        document.getElementById("log").innerHTML += `<p>> ${msg}</p>`;
+      // Drag and drop
+      const dropZone = document.getElementById("drop-zone");
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("drag-over");
+      });
+      dropZone.addEventListener("dragleave", () =>
+        dropZone.classList.remove("drag-over"),
+      );
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("drag-over");
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileSelection(file);
+      });
+
+      function onFileSelected() {
+        const file = document.getElementById("file-input").files[0];
+        if (file) handleFileSelection(file);
+      }
+
+      function handleFileSelection(file) {
+        if (file.size > MAX_FILE_SIZE) {
+          setSenderStatus("File too large. Max 500MB.", "error");
+          return;
+        }
+        selectedFile = file;
+        document.getElementById("drop-text").textContent =
+          `${file.name} (${formatSize(file.size)})`;
+        if (dataChannel && dataChannel.readyState === "open") {
+          document.getElementById("send-btn").disabled = false;
+        }
       }
 
       function createPeer(isSender) {
         peer = new RTCPeerConnection(STUN);
 
         peer.onicecandidate = (e) => {
-          if (e.candidate) {
+          if (e.candidate)
             socket.emit("ice-candidate", {
               code: currentCode,
               candidate: e.candidate,
             });
-          }
         };
 
         peer.onconnectionstatechange = () => {
-          log(`connection state: ${peer.connectionState}`);
-          if (peer.connectionState === "failed") {
-            handleError("Connection failed. Try again.");
-          }
+          if (peer.connectionState === "failed")
+            setSenderStatus("Connection failed.", "error");
         };
 
         if (isSender) {
@@ -95,46 +379,44 @@
         channel.binaryType = "arraybuffer";
 
         channel.onopen = () => {
-          log("data channel open!");
           if (isSender) {
-            document.getElementById("send-btn").disabled = false;
-            document.getElementById("sender-status").textContent =
-              "ready to send";
+            setSenderStatus("Connected! Select a file to send.", "active");
+            if (selectedFile)
+              document.getElementById("send-btn").disabled = false;
+            document.getElementById("send-btn").style.display = "block";
           } else {
-            document.getElementById("receiver-status").textContent =
-              "ready to receive";
+            setReceiverStatus("Connected! Waiting for file...", "active");
           }
         };
 
-        channel.onclose = () => log("data channel closed");
-
-        channel.onerror = (e) =>
-          handleError("Data channel error: " + e.message);
+        channel.onerror = () => {
+          setSenderStatus("Connection error.", "error");
+          setReceiverStatus("Connection error.", "error");
+        };
 
         channel.onmessage = (e) => {
-          // First message is always metadata (string)
           if (typeof e.data === "string") {
             receivingMeta = JSON.parse(e.data);
             receivedChunks = [];
             receivedSize = 0;
-            log(
-              `receiving: ${receivingMeta.name} (${formatSize(receivingMeta.size)})`,
-            );
-            document.getElementById("receiver-status").textContent =
-              "receiving...";
+            setReceiverStatus(`Receiving ${receivingMeta.name}...`, "active");
+            document
+              .getElementById("recv-progress-bar")
+              .classList.add("visible");
             return;
           }
 
-          // Rest are binary chunks
           receivedChunks.push(e.data);
           receivedSize += e.data.byteLength;
 
-          // Show receive progress
-          const pct = Math.round((receivedSize / receivingMeta.size) * 100);
-          document.getElementById("receive-progress").textContent =
-            `Receiving: ${pct}%`;
+          const pct = Math.min(
+            Math.round((receivedSize / receivingMeta.size) * 100),
+            100,
+          );
+          document.getElementById("recv-progress-fill").style.width = pct + "%";
+          document.getElementById("recv-progress-text").textContent =
+            `${pct}% — ${formatSize(receivedSize)} of ${formatSize(receivingMeta.size)}`;
 
-          // All chunks received
           if (receivedSize >= receivingMeta.size) {
             const blob = new Blob(receivedChunks, { type: receivingMeta.type });
             const url = URL.createObjectURL(blob);
@@ -144,12 +426,9 @@
             a.click();
             URL.revokeObjectURL(url);
 
-            document.getElementById("receive-progress").textContent = "Done!";
-            document.getElementById("receiver-status").textContent =
-              "file received!";
-            log(`done! received ${receivingMeta.name}`);
+            setReceiverStatus(`✓ ${receivingMeta.name} downloaded!`, "success");
+            document.getElementById("recv-progress-fill").style.width = "100%";
 
-            // Reset
             receivingMeta = null;
             receivedChunks = [];
             receivedSize = 0;
@@ -158,37 +437,33 @@
       }
 
       async function sendFile() {
-        const file = document.getElementById("file-input").files[0];
-        if (!file) return;
-
-        // File size check
-        if (file.size > MAX_FILE_SIZE) {
-          handleError("File too large. Max 500MB.");
+        if (!selectedFile || !dataChannel || dataChannel.readyState !== "open")
           return;
-        }
 
-        log(`sending: ${file.name} (${formatSize(file.size)})`);
-        document.getElementById("sender-status").textContent = "sending...";
         document.getElementById("send-btn").disabled = true;
+        document.getElementById("send-progress-bar").classList.add("visible");
+        setSenderStatus(`Sending ${selectedFile.name}...`, "active");
 
-        // Send metadata first
-        const meta = { name: file.name, size: file.size, type: file.type };
-        dataChannel.send(JSON.stringify(meta));
+        dataChannel.send(
+          JSON.stringify({
+            name: selectedFile.name,
+            size: selectedFile.size,
+            type: selectedFile.type,
+          }),
+        );
 
-        // Read file and send chunks
-        const buffer = await file.arrayBuffer();
+        const buffer = await selectedFile.arrayBuffer();
         let offset = 0;
 
         function sendNextChunk() {
           if (offset >= buffer.byteLength) {
-            document.getElementById("send-progress").textContent = "Done!";
-            document.getElementById("sender-status").textContent = "file sent!";
+            setSenderStatus(`✓ ${selectedFile.name} sent!`, "success");
+            document.getElementById("send-progress-fill").style.width = "100%";
+            document.getElementById("send-progress-text").textContent = "Done!";
             document.getElementById("send-btn").disabled = false;
-            log("file sent successfully");
             return;
           }
 
-          // Wait if buffer is full
           if (dataChannel.bufferedAmount > CHUNK_SIZE * 8) {
             setTimeout(sendNextChunk, 50);
             return;
@@ -198,9 +473,13 @@
           dataChannel.send(chunk);
           offset += CHUNK_SIZE;
 
-          const pct = Math.round((offset / buffer.byteLength) * 100);
-          document.getElementById("send-progress").textContent =
-            `Sending: ${Math.min(pct, 100)}%`;
+          const pct = Math.min(
+            Math.round((offset / buffer.byteLength) * 100),
+            100,
+          );
+          document.getElementById("send-progress-fill").style.width = pct + "%";
+          document.getElementById("send-progress-text").textContent =
+            `${pct}% — ${formatSize(Math.min(offset, buffer.byteLength))} of ${formatSize(buffer.byteLength)}`;
 
           setTimeout(sendNextChunk, 0);
         }
@@ -214,41 +493,48 @@
         return (bytes / (1024 * 1024)).toFixed(1) + " MB";
       }
 
-      function handleError(msg) {
-        log("ERROR: " + msg);
-        alert(msg);
+      function setSenderStatus(msg, type = "") {
+        const el = document.getElementById("sender-status");
+        el.textContent = msg;
+        el.className = "status " + type;
+      }
+
+      function setReceiverStatus(msg, type = "") {
+        const el = document.getElementById("receiver-status");
+        el.textContent = msg;
+        el.className = "status " + type;
       }
 
       function createRoom() {
         socket.emit("create-room");
+        setSenderStatus("Creating room...", "active");
       }
 
       function joinRoom() {
         const code = document.getElementById("code-input").value.trim();
         if (!code || code.length !== 6) {
-          handleError("Enter a valid 6 digit code");
+          setReceiverStatus("Enter a valid 6 digit code", "error");
           return;
         }
         currentCode = code;
         socket.emit("join-room", code);
+        setReceiverStatus("Joining...", "active");
       }
 
       socket.on("room-created", (code) => {
         currentCode = code;
         document.getElementById("room-code").textContent = code;
-        document.getElementById("sender-status").textContent =
-          "waiting for peer...";
+        document.getElementById("code-display").style.display = "block";
+        setSenderStatus("Waiting for peer to join...", "active");
       });
 
       socket.on("room-joined", (code) => {
-        document.getElementById("receiver-status").textContent =
-          `joined room ${code}`;
+        setReceiverStatus("Joined! Connecting...", "active");
         createPeer(false);
       });
 
       socket.on("peer-joined", async () => {
-        document.getElementById("sender-status").textContent =
-          "peer found, connecting...";
+        setSenderStatus("Peer found! Connecting...", "active");
         createPeer(true);
         const offer = await peer.createOffer();
         await peer.setLocalDescription(offer);
@@ -271,13 +557,15 @@
       });
 
       socket.on("peer-disconnected", () => {
-        log("peer disconnected");
-        document.getElementById("sender-status").textContent =
-          "peer disconnected";
+        setSenderStatus("Peer disconnected.", "error");
+        setReceiverStatus("Peer disconnected.", "error");
         document.getElementById("send-btn").disabled = true;
       });
 
-      socket.on("error", (msg) => handleError(msg));
+      socket.on("error", (msg) => {
+        setSenderStatus(msg, "error");
+        setReceiverStatus(msg, "error");
+      });
     </script>
   </body>
 </html>
